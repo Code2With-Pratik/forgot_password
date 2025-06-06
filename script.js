@@ -1,141 +1,134 @@
-const signUpButton = document.getElementById('signUpButton');
-const signInButton = document.getElementById('signInButton');
-const signInForm = document.getElementById('signIn');
-const signUpForm = document.getElementById('signup');
+document.addEventListener('DOMContentLoaded', function () {
+    const forgotPasswordButton = document.getElementById('forgotPasswordButton');
+    const forgotPasswordPopup = document.getElementById('forgotPasswordPopup');
+    const closeForgotPopupBtn = document.getElementById('closeForgotPopup');
+    const forgotPasswordForm = document.getElementById('forgotPasswordForm'); // Add reference to the form
+    const otpSection = document.getElementById('otpSection');
+    const resetSection = document.getElementById('resetSection');
+    const otpDisplay = document.getElementById('otpDisplay');
 
-// Forgot Password Pop-up
-const forgotPasswordButton = document.getElementById('forgotPasswordButton');
-const forgotPasswordPopup = document.getElementById('forgotPasswordPopup');
-const closeForgotPopup = document.getElementById('closeForgotPopup');
-const otpSection = document.getElementById('otpSection');
-const otpDisplay = document.getElementById('otpDisplay');
-const otpUsername = document.getElementById('otpUsername');
-const resetPasswordPopup = document.getElementById('resetPasswordPopup');
-const closeResetPopup = document.getElementById('closeResetPopup');
-const resetUsername = document.getElementById('resetUsername');
+    const changePasswordBtn = document.getElementById('changePasswordButton');
+    const changePasswordPopupBtn = document.getElementById('changePasswordPopup');
+    const closeChangePasswordPopupBtn = document.getElementById('closeChangePasswordPopup');
 
-// Change Password Pop-up
-const changePasswordButton = document.getElementById('changePasswordButton');
-const changePasswordPopup = document.getElementById('changePasswordPopup');
-const closeChangePasswordPopup = document.getElementById('closeChangePasswordPopup');
+    if (forgotPasswordButton && forgotPasswordPopup) {
+        forgotPasswordButton.addEventListener('click', function () {
+            forgotPasswordPopup.classList.remove('hidden');
+        });
+    }
 
-// Handle sign-up and sign-in form toggling (if used)
-if (signUpButton && signInButton && signInForm && signUpForm) {
-    signUpButton.addEventListener('click', function() {
-        signInForm.style.display = "none";
-        signUpForm.style.display = "block";
-    });
+    if (closeForgotPopupBtn) {
+        closeForgotPopupBtn.addEventListener('click', function () {
+            forgotPasswordPopup.classList.add('hidden');
+            forgotPasswordForm.classList.remove('hidden'); // Show the form again on close
+            otpSection.classList.add('hidden');
+            resetSection.classList.add('hidden');
+            otpDisplay.textContent = ''; // Clear OTP display on close
+        });
+    }
 
-    signInButton.addEventListener('click', function() {
-        signInForm.style.display = "block";
-        signUpForm.style.display = "none";
-    });
-}
+    if (changePasswordBtn && changePasswordPopupBtn) {
+        changePasswordBtn.addEventListener('click', function () {
+            changePasswordPopupBtn.classList.remove('hidden');
+        });
+    }
 
-// Forgot Password Pop-up
-if (forgotPasswordButton) {
-    forgotPasswordButton.addEventListener('click', function() {
-        forgotPasswordPopup.classList.remove('hidden');
-    });
-}
+    if (closeChangePasswordPopupBtn) {
+        closeChangePasswordPopupBtn.addEventListener('click', function () {
+            changePasswordPopupBtn.classList.add('hidden');
+        });
+    }
 
-if (closeForgotPopup) {
-    closeForgotPopup.addEventListener('click', function() {
-        forgotPasswordPopup.classList.add('hidden');
-        otpSection.classList.add('hidden');
-    });
-}
+    window.sendOTP = function () {
+        let input = document.getElementById('forgotUsername').value;
+        const currentTime = "11:06 PM IST, June 06, 2025"; // Updated to current system time, though not used in display
 
-// Show OTP section if redirected back after sending OTP
-if (window.location.search.includes('show_otp=1')) {
-    forgotPasswordPopup.classList.remove('hidden');
-    otpSection.classList.remove('hidden');
-    const otp = "<?php echo isset($_SESSION['otp']) ? $_SESSION['otp'] : ''; ?>";
-    otpDisplay.textContent = otp;
-    otpUsername.value = "<?php echo isset($_SESSION['otp_user']) ? $_SESSION['otp_user'] : ''; ?>";
-}
+        fetch("forgot_password.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `step=request_otp&input=${encodeURIComponent(input)}`
+        })
+        .then(res => res.json())
+        .then(data => {
+            console.log("Fetch Response:", data); // Debug: Log the response to console
+            if (data.status === 'success') {
+                // For development: Display only the 6-digit OTP on the interface
+                if (data.otp) {
+                    otpDisplay.textContent = data.otp; // Only show the 6-digit OTP (e.g., 123456)
+                } else {
+                    otpDisplay.textContent = 'OTP not received';
+                    console.error("OTP not found in response:", data);
+                }
+                sessionStorage.setItem("user_id", data.user_id);
+                document.getElementById('otpUserId').value = data.user_id;
+                forgotPasswordForm.classList.add('hidden'); // Hide the Send OTP form
+                otpSection.classList.remove('hidden'); // Show the OTP section
+            } else {
+                otpDisplay.textContent = ''; // Clear OTP on error
+                otpSection.classList.add('hidden'); // Hide OTP section on error
+                alert("Error: " + data.msg); // Show error message
+            }
+        })
+        .catch(error => {
+            console.error("Error occurred while sending OTP:", error);
+            otpDisplay.textContent = 'Error fetching OTP';
+            otpSection.classList.add('hidden'); // Hide OTP section on error
+            alert("An error occurred while sending OTP.");
+        });
+    };
 
-// Show Reset Password pop-up if OTP is verified
-if (window.location.search.includes('reset_password=1')) {
-    resetPasswordPopup.classList.remove('hidden');
-    resetUsername.value = "<?php echo isset($_SESSION['otp_verified_user']) ? $_SESSION['otp_verified_user'] : ''; ?>";
-}
+    window.verifyOTP = function () {
+        let otp = document.getElementById("otpInput").value;
+        let user_id = sessionStorage.getItem("user_id");
 
-if (closeResetPopup) {
-    closeResetPopup.addEventListener('click', function() {
-        resetPasswordPopup.classList.add('hidden');
-    });
-}
+        fetch("forgot_password.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `step=verify_otp&user_id=${encodeURIComponent(user_id)}&otp=${encodeURIComponent(otp)}`
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "valid") {
+                document.getElementById("resetUserId").value = user_id;
+                otpSection.classList.add('hidden'); // Hide OTP section (already done, confirming)
+                resetSection.classList.remove('hidden'); // Show reset password section
+            } else {
+                alert("Invalid OTP. Please try again.");
+            }
+        })
+        .catch(error => {
+            console.error("Error verifying OTP:", error);
+            alert("An error occurred while verifying OTP.");
+        });
+    };
 
-// Change Password Pop-up
-if (changePasswordButton) {
-    changePasswordButton.addEventListener('click', function() {
-        changePasswordPopup.classList.remove('hidden');
-    });
-}
+    window.resetPassword = function () {
+        let newPassword = document.getElementById("newPassword").value;
+        let confirmNewPassword = document.getElementById("confirmNewPassword").value;
+        let user_id = sessionStorage.getItem("user_id");
 
-if (closeChangePasswordPopup) {
-    closeChangePasswordPopup.addEventListener('click', function() {
-        changePasswordPopup.classList.add('hidden');
-    });
-}
-
-function alertFunc() {
-    alert("alert");
-}
-
-function sendOTP() {
-    let input = document.getElementById("emailOrPhone").value;
-
-    fetch("forgot_password.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `step=request_otp&input=${input}`
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === "success") {
-            alert("OTP: " + data.otp); // For development only
-            sessionStorage.setItem("user_id", data.user_id);
-            document.getElementById("otpSection").style.display = "block";
-        } else {
-            alert("User not found!");
+        if (newPassword !== confirmNewPassword) {
+            alert("Passwords do not match!");
+            return;
         }
-    });
-}
 
-function verifyOTP() {
-    let otp = document.getElementById("otpField").value;
-    let user_id = sessionStorage.getItem("user_id");
-
-    fetch("forgot_password.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `step=verify_otp&user_id=${user_id}&otp=${otp}`
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === "valid") {
-            document.getElementById("resetSection").style.display = "block";
-        } else {
-            alert("Invalid OTP");
-        }
-    });
-}
-
-function resetPassword() {
-    let newPassword = document.getElementById("newPassword").value;
-    let user_id = sessionStorage.getItem("user_id");
-
-    fetch("forgot_password.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `step=reset_password&user_id=${user_id}&new_password=${newPassword}`
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === "updated") {
-            alert("Password updated successfully");
-        }
-    });
-}
+        fetch("forgot_password.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `step=reset_password&user_id=${encodeURIComponent(user_id)}&new_password=${encodeURIComponent(newPassword)}`
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "updated") {
+                alert("Password updated successfully! Please login with your new password.");
+                window.location.href = "index.php";
+            } else {
+                alert("Error: " + (data.msg || "Failed to update password."));
+            }
+        })
+        .catch(error => {
+            console.error("Error resetting password:", error);
+            alert("An error occurred while resetting password.");
+        });
+    };
+});
