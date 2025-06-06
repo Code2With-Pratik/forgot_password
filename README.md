@@ -5,7 +5,7 @@ Create a database named login in phpMyAdmin using XAMPP Server.
 Import the login.sql file to set up the database schema.
 Place the project files in C:\xampp\htdocs\smartstore\.
 Start the XAMPP server (Apache and MySQL).
-Access the project at http://localhost/smartstore.](https://forgotpasswordmanager.ct.ws/
+Access the project at https://forgotpasswordmanager.ct.ws/
 
 Features
 
