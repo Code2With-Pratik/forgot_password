@@ -24,6 +24,8 @@ Enter current password, new password, and confirm new password to update.
 
 Logout: Log out and destroy the session.
 
+##################################################################################
+
 File Structure
 
 login.sql: Database schema with users and otps tables.
