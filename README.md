@@ -35,5 +35,7 @@ homepage.php: Homepage for logged-in users with "Change Password" functionality.
 logout.php: Logs out the user.
 script.js: JavaScript for handling pop-up visibility and form toggling.
 
+####################################################################################
+
 
   
