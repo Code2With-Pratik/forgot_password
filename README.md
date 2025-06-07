@@ -7,6 +7,8 @@ Place the project files in C:\xampp\htdocs\smartstore\.
 Start the XAMPP server (Apache and MySQL).
 Access the project at https://forgotpasswordmanager.ct.ws/
 
+#################################################################################
+
 Features
 
 Sign Up: Register a new user with full name, email, phone, and password.
